@@ -6,13 +6,13 @@ library(rlist)
 # 初期設定
 #kFilenames <- c("hayes-roth", "iris", "wine")
 kFilenames <- c("hayes-roth")
-kIter1 <- 10
-kIter2 <- 5
+kIter1 <- 5
+kIter2 <- 10
 kMerged.rate <- seq(0.1, 0.9,by=0.1)
 
 # MLEM2 実験
 results <- list()
-source("/home/ooki/R/roughsets/getResults_by_MLEME2.R")
+source("~/R/roughsets/getResults_by_MLEME2.R")
 for(fn in kFilenames){
   for(kmr in kMerged.rate){
     sprintf("kmr:%s",kmr)

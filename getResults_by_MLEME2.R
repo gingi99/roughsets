@@ -20,12 +20,12 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         
         
         ## Incert multiple Sample
-        source("/home/ooki/R/createData/InsertSample.R")
+        source("~/R/createData/InsertSample.R")
         #data.train <- insertNewValueToData(data.train, 100)
         #data.train <- insertNewSampleToData(data.train, 1000)
         
         ## PP Cluster
-        source("/home/ooki/R/ppdm/cluster.R")
+        source("~/R/ppdm/cluster.R")
         data.train <- ppCluster(data.train, 
                                 merged.number=0, 
                                 merged.rate = kMerged.rate, 
@@ -33,7 +33,7 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
                                 rep.Method = "Merged")
         
         ## measure
-        source("/home/ooki/R/ppdm/get_PPDM_Measure.R")
+        source("~/R/ppdm/get_PPDM_Measure.R")
         kano <- calKAnonymity(data.train)
         
         ## convert decisicon table class
@@ -45,8 +45,8 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         data.test    <- SF.asDecisionTable(data.test[,-ncol(data.test)])
         
         ## 条件属性の離散化(と同時に、DecisionTable & data.frame型になってる)
-        source("/home/ooki/R/roughsets/My.Discretization.R")
-        source("/home/ooki/R/roughsets/My.ObjectFactory.R")
+        source("~/R/roughsets/My.Discretization.R")
+        source("~/R/roughsets/My.ObjectFactory.R")
         data.train <- D.discretization.RST(data.train,
                                            type.method = "convert.nominal")
         
@@ -58,8 +58,8 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         #data.test  <- SF.applyDecTable(data.test,  cut.values)
         
         ## rule induction from the training set:
-        source("/home/ooki/R/roughsets/My.RI.LEM2Rules.RST.R")
-        source("/home/ooki/R/roughsets/My.RuleInduction.OtherFuncCollections.R")
+        source("~/R/roughsets/My.RI.LEM2Rules.RST.R")
+        source("~/R/roughsets/My.RuleInduction.OtherFuncCollections.R")
         rules <- My.RI.MLEM2Rules.RST(data.train)
         #rules <- RI.LEM2Rules.RST(data.train)
         
@@ -68,7 +68,7 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         #str(rules)
         
         ## predicitons for the test set:
-        source("/home/ooki/R/roughsets/LERS.R")
+        source("~/R/roughsets/LERS.R")
         pred.vals <- predict.LERS(rules, data.test)
         #pred.vals1 <- predict(rules, data.test, votingMethod = X.ruleStrength)
         #pred.vals2 <- predict(rules, data.test, votingMethod = X.laplace)
@@ -80,7 +80,7 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         #               sprintf("%.3f", mean(pred.vals2 == true.classes)),
         #               sprintf("%.3f", mean(pred.vals3 == true.classes)))      
         precision.sd <- sprintf("%.3f", sd(pred.vals == true.classes))
-        source("/home/ooki/R/ppdm/get_PPDM_Measure.R")
+        source("~/R/ppdm/get_PPDM_Measure.R")
         entropy <- calEntropyForData(data.train)
         result <- paste(precision, "±", precision.sd, sep="")
         #result <- c(paste(sprintf("%.3f", mean(pred.vals1 == true.classes)),"±",sprintf("%.3f", sd(pred.vals1 == true.classes)), sep=""),
