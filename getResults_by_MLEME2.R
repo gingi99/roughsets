@@ -2,7 +2,10 @@
 getResults_by_MLEM2 <- function(kFilenames = c("iris"), 
                                 kIter1 = 2,
                                 kIter2 = 5,
-                                kMerged.rate = 0.1){
+                                kms = 0,
+                                kmr = 0,
+                                mgs = "max",
+                                rpm = "Merged"){
   kIter  <- kIter1*kIter2
   results <- list()
   for(fn in kFilenames){
@@ -27,10 +30,10 @@ getResults_by_MLEM2 <- function(kFilenames = c("iris"),
         ## PP Cluster
         source("~/R/ppdm/cluster.R")
         data.train <- ppCluster(data.train, 
-                                merged.number=0, 
-                                merged.rate = kMerged.rate, 
-                                merged.size="max", 
-                                rep.Method = "Merged")
+                                merged.number = kms, 
+                                merged.rate   = kmr, 
+                                merged.size   = mgs, 
+                                rep.Method    = rpm)
         
         ## measure
         source("~/R/ppdm/get_PPDM_Measure.R")
