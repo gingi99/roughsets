@@ -128,19 +128,12 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
       
       ## TG := {t : t ^ G}のところ
       TG <- list()
-      # TG <- lapply(uncoveredConcept, 
-      #              function(x, i){
-      #                if(length(intersect(x, i)) > 0){
-      #                  return(attributeValuePairs[[len]])
-      #                }
-      #              },
-      #              list.map(attributeValuePairs, support)[[len]]) 
-      for(len in 1:length(attributeValuePairs)){
-        #print(paste("attributeValuePairs : ", len, sep=""))
-        if(length(intersect(uncoveredConcept, list.map(attributeValuePairs, support)[[len]])) > 0){
-          TG <- list.append(TG, attributeValuePairs[[len]])
+      TG <- lapply(attributeValuePairs, function(avp){
+        if(length(intersect(uncoveredConcept, avp$support)) > 0){
+          return(avp)
         }
-      }
+      })
+      TG <- list.clean(TG, recursive = F)
       names(TG) <- paste("bes",seq(1,length(TG)), sep="")
       
       totalSupport <- 0
@@ -186,11 +179,12 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
         
         ##  TG := {t : t ^ G}のところ
         TG <- list()
-        for(len in 1:length(attributeValuePairs)){
-          if(length(intersect(uncoveredConcept, list.map(attributeValuePairs, support)[[len]])) > 0){
-            TG <- list.append(TG, attributeValuePairs[[len]])
+        TG <- lapply(attributeValuePairs, function(avp){
+          if(length(intersect(uncoveredConcept, avp$support)) > 0){
+            return(avp)
           }
-        }
+        })
+        TG <- list.clean(TG, recursive = F)
         names(TG) <- paste("bes",seq(1,length(TG)), sep="")
         
         ## 同じ属性のやつは全部消せばいいと思ってたけど間違ってた
