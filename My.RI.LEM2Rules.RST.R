@@ -10,13 +10,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
     # 決定属性がある列を求める（irisなら5）
     decIdx = attr(decision.table, "decision.attr")
   }
-  
-  # MLEM2の場合不要なはず
-  #if(!all(attr(decision.table, "nominal.attrs"))) {
-  #  stop("Some of the attributes are numerical.
-  #       Discretize attributes before calling RST-based rule induction methods.")
-  #}
-  
+    
   ## 決定属性の決定クラスのFactor型ベクトルを求める（irisなら、決定クラス150要素）
   # tbl_dfの性質で以下だと無理なのか…
   clsVec <- decision.table[,decIdx][[1]]
@@ -29,13 +23,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   
   ## 各決定クラスの度数を求める（irisなら、50,50,50）
   clsFreqs <- table(clsVec)
-  
-  ## 数値属性も一旦nominal化
-  # source("/home/ooki/R/roughsets/My.Discretization.R")
-  # source("/home/ooki/R/roughsets/My.ObjectFactory.R")
-  # decision.table <- D.discretization.RST(decision.table,
-  #                                        type.method = "convert.nominal")
-  
+
   ## 識別不能関係のリストを返す
   INDrelation = BC.IND.relation.RST(decision.table, (1:ncol(decision.table))[-decIdx])
   
@@ -48,23 +36,6 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   
   ## 各条件属性の取りうる条件属性値を返す
   descriptorsList = attr(decision.table, "desc.attrs")[-decIdx]
-  
-  ## 各条件属性の取りうる条件属性値をリスト構造を変えて返す
-  #descriptorCandidates = list()
-  #for (i in 1:length(descriptorsList)) {
-  #  descriptorCandidates = c(descriptorCandidates,
-  #                           lapply(descriptorsList[[i]],
-  #                                  function(v, x) return(list(idx = x, values = v)), i))
-  #}
-  
-  ## ５つの要素を持つ条件属性ペアを返す(idx: int 4, values:chr "(0.867,1.6]", consequent: chr "versicolor", support   : int [1:48] 6 7 8 9 10 21 22 23 24 25 ..., laplace   : Named num 0.882)
-  ### laplaceEstimate,関数は RuleInduction.OtherFuncCollections.Rにある。
-  ### decision.tableがdata.table型だと動かないので注意
-  #attributeValuePairs = lapply(descriptorCandidates, 
-  #                             laplaceEstimate, 
-  #                             decision.table[,-decIdx], 
-  #                             clsVec, 
-  #                             uniqueCls)
   
   ## cutpoint型の各条件属性の取りうる条件属性値候補集合をリスト構造で返す
   attributeValuePairs = list()
@@ -188,17 +159,17 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
         names(TG) <- paste("bes",seq(1,length(TG)), sep="")
               
         ## T(G) := T(G) - T のところ
-        for(ind.tmp.rule in 1:length(tmpRule)){
+        for(tmp.rule in tmpRule){
           TG <- lapply(TG, function(tg){
-            if(tg$idx == tmpRule[[ind.tmp.rule]]$idx){
+            if(tg$idx == tmp.rule$idx){
               if(tg$type == "num"){
-                if(tg$values1 == tmpRule[[ind.tmp.rule]]$values1 & tg$values2 == tmpRule[[ind.tmp.rule]]$values2){
+                if(tg$values1 == tmp.rule$values1 & tg$values2 == tmp.rule$values2){
                   return(NULL)
                 }else{
                   return(tg)
                 }
               }else{
-                if(tg$values == tmpRule[[ind.tmp.rule]]$values){
+                if(tg$values == tmp.rule$values){
                   return(NULL)
                 }else{
                   return(tg)
@@ -210,7 +181,6 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
           })
           TG <- list.clean(TG, recursive = F)
         }
-        
       }
       
       # tmpRuleの確定のところ
@@ -267,8 +237,6 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
     }
   }
   
-  #print("debug : end rules")
-  
   # simplicity conditions
   rules.simple <- list()
   for(ind.rule in 1:length(rules)){
@@ -302,9 +270,6 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   
   #rules2 = unlist(rules.simple, recursive = FALSE)
   rules2 = rules.simple
-  # 一旦消去
-  #rules2 = lapply(rules2, function(x) laplaceEstimate(list(idx = x$idx, values = x$values), 
-  #                                                    decision.table, clsVec, uniqueCls, suppIdx = x$support))
   
   attr(rules2, "uniqueCls") <- as.character(sort(uniqueCls))
   attr(rules2, "clsProbs") <- clsFreqs/sum(clsFreqs)
