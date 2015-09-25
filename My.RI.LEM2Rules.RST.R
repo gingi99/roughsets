@@ -186,17 +186,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
         })
         TG <- list.clean(TG, recursive = F)
         names(TG) <- paste("bes",seq(1,length(TG)), sep="")
-        
-        ## 同じ属性のやつは全部消せばいいと思ってたけど間違ってた
-        #delete.idx <- vector()
-        #for(len in 1:length(TG)){
-        #  if(TG[[len]]$idx %in% (list.select(tmpRule, idx) %>% list.cases(idx))){
-        #    delete.idx <- append(delete.idx, len)
-        #  }
-        #}
-        #TG <- list.remove(TG, delete.idx)
-        #names(TG) <- paste("bes",seq(1,length(TG)), sep="")
-        
+              
         ## T(G) := T(G) - T のところ
         delete.idx <- vector()
         for(ind.tmp.rule in 1:length(tmpRule)){
