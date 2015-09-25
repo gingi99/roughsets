@@ -188,23 +188,29 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
         names(TG) <- paste("bes",seq(1,length(TG)), sep="")
               
         ## T(G) := T(G) - T のところ
-        delete.idx <- vector()
         for(ind.tmp.rule in 1:length(tmpRule)){
-          for(ind.TG in 1:length(TG)){
-            if(TG[[ind.TG]]$idx == tmpRule[[ind.tmp.rule]]$idx){
-              if(TG[[ind.TG]]$type == "num"){
-                if(TG[[ind.TG]]$values1 == tmpRule[[ind.tmp.rule]]$values1 & TG[[ind.TG]]$values2 == tmpRule[[ind.tmp.rule]]$values2){
-                  delete.idx <- append(delete.idx, ind.TG)
-                } 
-              }else{ #TG[[ind.TG]]$type == "nom"
-                if(TG[[ind.TG]]$values == tmpRule[[ind.tmp.rule]]$values){
-                  delete.idx <- append(delete.idx, ind.TG)
+          TG <- lapply(TG, function(tg){
+            if(tg$idx == tmpRule[[ind.tmp.rule]]$idx){
+              if(tg$type == "num"){
+                if(tg$values1 == tmpRule[[ind.tmp.rule]]$values1 & tg$values2 == tmpRule[[ind.tmp.rule]]$values2){
+                  return(NULL)
+                }else{
+                  return(tg)
+                }
+              }else{
+                if(tg$values == tmpRule[[ind.tmp.rule]]$values){
+                  return(NULL)
+                }else{
+                  return(tg)
                 }
               }
+            }else{
+              return(tg)
             }
-          }
+          })
+          TG <- list.clean(TG, recursive = F)
         }
-        TG <- list.remove(TG, delete.idx)
+        
       }
       
       # tmpRuleの確定のところ
