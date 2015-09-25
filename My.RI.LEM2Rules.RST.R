@@ -145,18 +145,19 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
       
       totalSupport <- 0
       
-      # 1つのrule を求める
+      # 1つのrule を求める(ここがボトルネック)
       while(length(tmpRule) == 0 | any(!totalSupport %in% concept)) {
         
-        #print(paste("tmpRule, totalSupport : ", length(tmpRule),", ",length(totalSupport), sep=""))
+        print(paste("tmpRule, totalSupport : ", length(tmpRule),", ",length(totalSupport), sep=""))
         
         ## 基本条件e の候補を探索する
         t.best <- list()
-        for(len in 1:length(TG)){
-          TG[[len]]$cover.num <- length(intersect(uncoveredConcept, list.map(TG, support)[[len]]))
-        }
-        tmpMaxValue <- max(list.mapv(TG, cover.num))
-        tmpMaxIndexs <- which(list.mapv(TG, cover.num) == tmpMaxValue)
+        vec.cover.num <- sapply(TG, function(tg){
+          length(intersect(uncoveredConcept, tg$support))
+        })
+        vec.cover.num <- unname(vec.cover.num)
+        tmpMaxValue <- max(vec.cover.num)
+        tmpMaxIndexs <- which(vec.cover.num == tmpMaxValue)
         if(length(tmpMaxIndexs) == 1){
           t.best <- TG[tmpMaxIndexs]
         }else if (length(tmpMaxIndexs) > 1){
