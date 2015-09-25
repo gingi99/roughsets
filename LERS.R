@@ -1,5 +1,6 @@
 ## LERS
 predict.LERS <- function(rules, data.test) {
+  library(stringr)
   if(!inherits(rules, "RuleSetRST")) stop("The rule set does not an object from the \'RuleSetRST\' class")
   
   if(!inherits(data.test, "DecisionTable")) stop("Provided data should inherit from the \'DecisionTable\' class.")
@@ -18,7 +19,7 @@ predict.LERS <- function(rules, data.test) {
       idxs <- rule$idx
       values <- rule$values
       judge <- TRUE
-      for(ind.idx in 1:length(idxs)){
+      for(ind.idx in 1:length(idxs)){      
         # num 
         if(is.numeric(values[[ind.idx]])){
           if(data.test[ind.obj,][idxs[ind.idx]] > values[[ind.idx]][1]&
@@ -30,11 +31,26 @@ predict.LERS <- function(rules, data.test) {
           }
         # nom  
         }else{
-          if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
-            judge <- TRUE
+          # 基本条件が複数の条件でルールができている場合
+          if(str_detect(values[[ind.idx]][1], "^\\[.*\\]$")){
+            v <- values[[ind.idx]][1]
+            v <- str_replace_all(v, "^\\[", "")
+            v <- str_replace_all(v, "\\]$", "")
+            v <- str_split(v, ",")[[1]]
+            if(data.test[ind.obj,][idxs[ind.idx]] %in% v){
+              judge <- TRUE
+            }else{
+              judge <- FALSE
+              break
+            }
+          # 基本条件が1つの条件でルールができている場合
           }else{
-            judge <- FALSE
-            break
+            if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
+              judge <- TRUE
+            }else{
+              judge <- FALSE
+              break
+            } 
           }
         }
       }
@@ -58,6 +74,7 @@ predict.LERS <- function(rules, data.test) {
           specificity <- length(rule$values)
           if((strength * specificity) > support_D){
             estimatedClass <- rule$consequent
+            support_D <- strength * specificity
           }
         }
       }else{
@@ -82,14 +99,27 @@ predict.LERS <- function(rules, data.test) {
             }
           # nom  
           }else{
-            if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
-              matching_factor <- matching_factor + 1
+            # 基本条件が複数の条件でルールができている場合
+            if(str_detect(values[[ind.idx]][1], "^\\[.*\\]$")){
+              v <- values[[ind.idx]][1]
+              v <- str_replace_all(v, "^\\[", "")
+              v <- str_replace_all(v, "\\]$", "")
+              v <- str_split(v, ",")[[1]]
+              if(data.test[ind.obj,][idxs[ind.idx]] %in% v){
+                matching_factor <- matching_factor + 1  
+              }
+            # 基本条件が1つの条件でルールができている場合
+            }else{
+              if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
+                matching_factor <- matching_factor + 1
+              }              
             }
           }
         }
         matching_factor <- matching_factor / length(idxs)
         if((matching_factor * strength * specificity) > p_support){
           estimatedClass <- rule$consequent
+          p_support <- matching_factor * strength * specificity
         }
       }
     }
