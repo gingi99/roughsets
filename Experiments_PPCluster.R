@@ -2,13 +2,17 @@
 library(tidyr)
 library(ggplot2)
 library(rlist)
+library(foreach)
+library(pforeach)
+library(doParallel)
+library(doSNOW)
 
 # 初期設定
 #kFilenames <- c("hayes-roth", "iris", "wine", "zoo")
 rm(list = ls())
-kFilenames <- c("wine")
-kIter1 <- 10
-kIter2 <- 10
+fn <- "hayes-roth"
+kIter1 <- 2
+kIter2 <- 5
 kMerged.rate <- seq(0.0, 0.9, by=0.1)
 kMerged.size <- seq(0, 18, by=2)
 mgs <- 1
@@ -21,22 +25,17 @@ results <- list()
 source("~/R/roughsets/getResults_by_MLEME2.R")
 
 # kMerged.rateの実験
-for(fn in kFilenames){
-  for(kmr in kMerged.rate){
-    sprintf("kmr:%s",kmr)
-    results <- list.append(results, getResults_by_MLEM2(kFilenames = fn, 
-                                                kIter1 = kIter1, 
-                                                kIter2 = kIter2,
-                                                kms = 0,
-                                                kmr = kmr,
-                                                mgs = mgs,
-                                                rpm = rpm)
-    )
-  }
-}
-names(results) <- c(paste(kFilenames[1], kMerged.rate, sep=""))
-#names(results) <- c(paste(kFilenames[1], kMerged.rate, sep=""), 
-#                    paste(kFilenames[2], kMerged.rate, sep=""))
+fn <- "hayes-roth"
+results <- pforeach(kmr = kMerged.rate, .c=list)({
+  getResults_by_MLEM2(kFilenames = fn,
+                      kIter1 = kIter1, 
+                      kIter2 = kIter2,
+                      kms = 0,
+                      kmr = kmr,
+                      mgs = mgs,
+                      rpm = rpm)
+})
+names(results) <- c(paste(fn, kMerged.rate, sep=""))
 
 # kMerged.sizeの実験
 for(fn in kFilenames){
