@@ -2,10 +2,12 @@
 library(tidyr)
 library(ggplot2)
 library(rlist)
-library(foreach)
+library(readr)
+library(data.table)
+library(dplyr)
+library(pipeR)
+library(RoughSets)
 library(pforeach)
-library(doParallel)
-library(doSNOW)
 
 # 初期設定
 #kFilenames <- c("hayes-roth", "iris", "wine", "zoo")
@@ -25,7 +27,6 @@ results <- list()
 source("~/R/roughsets/getResults_by_MLEME2.R")
 
 # kMerged.rateの実験
-fn <- "hayes-roth"
 results <- pforeach(kmr = kMerged.rate, .c=list)({
   getResults_by_MLEM2(kFilenames = fn,
                       kIter1 = kIter1, 
@@ -38,26 +39,22 @@ results <- pforeach(kmr = kMerged.rate, .c=list)({
 names(results) <- c(paste(fn, kMerged.rate, sep=""))
 
 # kMerged.sizeの実験
-for(fn in kFilenames){
-  for(kms in kMerged.size){
-    sprintf("kms:%s",kms)
-    results <- list.append(results, getResults_by_MLEM2(kFilenames = fn, 
+for(kms in kMerged.size){
+  sprintf("kms:%s",kms)
+  results <- list.append(results, getResults_by_MLEM2(kFilenames = fn, 
                                                         kIter1 = kIter1, 
                                                         kIter2 = kIter2,
                                                         kms = kms,
                                                         kmr = 0,
                                                         mgs = mgs,
                                                         rpm = rpm)
-    )
-  }
+  )
 }
-names(results) <- c(paste(kFilenames[1], kMerged.size, sep=""))
-#names(results) <- c(paste(kFilenames[1], kMerged.rate, sep=""), 
-#                    paste(kFilenames[2], kMerged.rate, sep=""))
+names(results) <- c(paste(fn, kMerged.size, sep=""))
 
 # accurayを取る
 dt.results <- data.table()
-for(n in 1:length(kFilenames)){
+for(n in 1:length(fn)){
   dt.results <- rbind_list(dt.results, data.table(
     kmr00 = list.mapv(results[[10*n - 9]][[1]], precision) %>% unname %>% as.numeric,
     kmr01 = list.mapv(results[[10*n - 8]][[1]], precision) %>% unname %>% as.numeric,
@@ -68,7 +65,7 @@ for(n in 1:length(kFilenames)){
     kmr06 = list.mapv(results[[10*n - 3]][[1]], precision) %>% unname %>% as.numeric,
     kmr07 = list.mapv(results[[10*n - 2]][[1]], precision) %>% unname %>% as.numeric,
     kmr08 = list.mapv(results[[10*n - 1]][[1]], precision) %>% unname %>% as.numeric,
-    #kmr09 = list.mapv(results[[10*n - 0]][[1]], precision) %>% unname %>% as.numeric,
+    kmr09 = list.mapv(results[[10*n - 0]][[1]], precision) %>% unname %>% as.numeric,
     fn    = names(results[[10*n - 9]]))
   )
 }

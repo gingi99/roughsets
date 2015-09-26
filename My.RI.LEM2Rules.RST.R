@@ -12,8 +12,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   }
     
   ## 決定属性の決定クラスのFactor型ベクトルを求める（irisなら、決定クラス150要素）
-  # tbl_dfの性質で以下だと無理なのか…
-  clsVec <- decision.table[,decIdx][[1]]
+  clsVec <- dplyr::select(decision.table, decIdx)[[1]]
   
   ## ユニークな決定クラスを求める（irisなら、setosa、versicolor、virginicaの3つ） 
   uniqueCls <- unique(clsVec)
@@ -279,7 +278,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   attr(rules2, "colnames") <- colnames(decision.table)[-decIdx]
   
   # RuleSetRSTクラスを付与し、rulesの記述を指定フォーマットに変える
-  source("/home/ooki/R/roughsets/My.ObjectFactory.R")
+  source("~/R/roughsets/My.ObjectFactory.R")
   rules2 = My.ObjectFactory(rules2, classname = "RuleSetRST")
   
   return(rules2);
