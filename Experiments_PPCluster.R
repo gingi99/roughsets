@@ -1,3 +1,6 @@
+# パス追加
+.libPaths(c("/home/ooki/R/x86_64-pc-linux-gnu-library/3.1", .libPaths()))
+
 #パッケージ
 library(tidyr)
 library(ggplot2)
@@ -12,9 +15,9 @@ library(pforeach)
 # 初期設定
 rm(list = ls())
 #kFilenames <- c("hayes-roth", "iris", "wine", "zoo")
-fn <- "hayes-roth"
-kIter1 <- 2
-kIter2 <- 5
+fn <- "wine"
+kIter1 <- 10
+kIter2 <- 10
 kMerged.rate <- seq(0.0, 0.9, by=0.1)
 kMerged.size <- seq(0, 18, by=2)
 mgs <- 1
@@ -91,7 +94,7 @@ for(n in 1:length(fn)){
 
 # t検定
 vec.pvalues.precision <- sapply(dplyr::select(dt.results, 1:10), function(result){
-  p <- t.test(dt.results$kmr00, result)$p.value
+  p <- t.test(dt.results$km00, result)$p.value
   if(p <= 0.01){
     return("< 0.01")
   }else if(p > 0.01 & p <= 0.05){
@@ -122,7 +125,7 @@ ggsave(file="aaa.png", plot=gg, dpi = 320, width = 12, height = 8.52)
   
 # t検定
 vec.pvalues.entropy <- sapply(dplyr::select(dt.entropy, 1:10), function(entropy){
-  p <- t.test(dt.entropy$kmr00, entropy)$p.value
+  p <- t.test(dt.entropy$km00, entropy)$p.value
   if(p <= 0.01){
     return("< 0.01")
   }else if(p > 0.01 & p <= 0.05){
