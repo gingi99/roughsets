@@ -18,6 +18,12 @@ predict.LERS <- function(rules, data.test) {
     for(rule in rules){
       idxs <- rule$idx
       values <- rule$values
+      # bug。なぜかvalues が list()なのがあるのでその回避
+      if(length(values) == 0){
+        judge <- FALSE
+        judges <- append(judges, judge)
+        next
+      }
       judge <- TRUE
       for(ind.idx in 1:length(idxs)){      
         # num 
@@ -90,6 +96,10 @@ predict.LERS <- function(rules, data.test) {
         matching_factor <- 0
         idxs <- rule$idx
         values <- rule$values
+        # bug。なぜかvalues が list()なのがあるのでその回避
+        if(length(values) == 0){
+          next
+        }
         for(ind.idx in 1:length(idxs)){
           # num 
           if(is.numeric(values[[ind.idx]])){
