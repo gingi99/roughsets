@@ -14,55 +14,54 @@ predict.LERS <- function(rules, data.test) {
   predVec <- vector()
   
   for(ind.obj in 1:nrow(data.test)){
-    judges <- vector()
-    for(rule in rules){
+    judges <- sapply(rules, function(rule){
       idxs <- rule$idx
       values <- rule$values
       # bug。なぜかvalues が list()なのがあるのでその回避
       if(length(values) == 0){
         judge <- FALSE
-        judges <- append(judges, judge)
-        next
       }
-      judge <- TRUE
-      for(ind.idx in 1:length(idxs)){      
-        # num 
-        if(is.numeric(values[[ind.idx]])){
-          if(data.test[ind.obj,][idxs[ind.idx]] > values[[ind.idx]][1]&
-             data.test[ind.obj,][idxs[ind.idx]] < values[[ind.idx]][2]){ 
-            judge <- TRUE
-          }else{
-            judge <- FALSE
-            break
-          }
-        # nom  
-        }else{
-          # 基本条件が複数の条件でルールができている場合
-          if(str_detect(values[[ind.idx]][1], "^\\[.*\\]$")){
-            v <- values[[ind.idx]][1]
-            v <- str_replace_all(v, "^\\[", "")
-            v <- str_replace_all(v, "\\]$", "")
-            v <- str_split(v, ",")[[1]]
-            if(data.test[ind.obj,][idxs[ind.idx]] %in% v){
+      else{
+        judge <- TRUE
+        for(ind.idx in 1:length(idxs)){      
+          # num 
+          if(is.numeric(values[[ind.idx]])){
+            if(data.test[ind.obj,][idxs[ind.idx]] > values[[ind.idx]][1]&
+                 data.test[ind.obj,][idxs[ind.idx]] < values[[ind.idx]][2]){ 
               judge <- TRUE
             }else{
               judge <- FALSE
               break
             }
-          # 基本条件が1つの条件でルールができている場合
+            # nom  
           }else{
-            if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
-              judge <- TRUE
+            # 基本条件が複数の条件でルールができている場合
+            if(str_detect(values[[ind.idx]][1], "^\\[.*\\]$")){
+              v <- values[[ind.idx]][1]
+              v <- str_replace_all(v, "^\\[", "")
+              v <- str_replace_all(v, "\\]$", "")
+              v <- str_split(v, ",")[[1]]
+              if(data.test[ind.obj,][idxs[ind.idx]] %in% v){
+                judge <- TRUE
+              }else{
+                judge <- FALSE
+                break
+              }
+              # 基本条件が1つの条件でルールができている場合
             }else{
-              judge <- FALSE
-              break
-            } 
-          }
+              if(data.test[ind.obj,][idxs[ind.idx]] == values[[ind.idx]][1]){
+                judge <- TRUE
+              }else{
+                judge <- FALSE
+                break
+              } 
+            }
+          }  
         }
       }
-      judges <- append(judges, judge)
-    }
-    
+      return(judge)
+    })
+
     # objにマッチするrule が 1つでもある
     estimatedClass <- NULL
     if(any(judges)){
