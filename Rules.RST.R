@@ -1,4 +1,9 @@
 ## MLEM2 用パッケージ
+library(rlist)
+library(dplyr)
+library(data.table)
+library(pforeach)
+
 My.RI.MLEM2Rules.RST <- function(decision.table)  {
   if (!inherits(decision.table, "DecisionTable")) {
     stop("Provided data should inherit from the \'DecisionTable\' class.")
@@ -67,11 +72,12 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   }
   
   rm(descriptorsList)
-  #print("debug : start rules")
 
   ## T := 0 のところ
   rules <- list()
-  for(i in 1:length(lowerApproximations)) {
+  Rules <- list()
+  Rules <- pforeach(i = 1:length(lowerApproximations), .c=list, .multicombine=TRUE, .verbose = TRUE)({
+  #for(i in 1:length(lowerApproximations)) {
     print(paste("Lower Approximation : ",i,sep=""))
     concept <- lowerApproximations[[i]]
     decisionValues <- clsVec
@@ -92,7 +98,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
     ## G が空じゃないならループを続ける
     while(length(uncoveredConcept) > 0) {
 
-      #print(paste("uncoveredConcept : ", length(uncoveredConcept), sep=""))
+      print(paste("uncoveredConcept : ", length(uncoveredConcept), sep=""))
       ## T := 0 のところ
       tmpRule <- list()
       
@@ -111,13 +117,16 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
       # 1つのrule を求める(ここがボトルネック)
       while(length(tmpRule) == 0 | any(!totalSupport %in% concept)) {
         
-        print(paste("tmpRule, totalSupport : ", length(tmpRule),", ",length(totalSupport), sep=""))
+        #print(paste("tmpRule, totalSupport : ", length(tmpRule),", ",length(totalSupport), sep=""))
         
         ## 基本条件e の候補を探索する
         t.best <- list()
         vec.cover.num <- sapply(TG, function(tg){
           length(intersect(uncoveredConcept, tg$support))
         })
+        #vec.cover.num <- pforeach(i = 1:length(TG))({
+        #  length(intersect(uncoveredConcept, TG[[i]]$support))
+        #})
         vec.cover.num <- unname(vec.cover.num)
         tmpMaxValue <- max(vec.cover.num)
         tmpMaxIndexs <- which(vec.cover.num == tmpMaxValue)
@@ -154,35 +163,81 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
             return(avp)
           }
         })
+        #TG <- pforeach(i = 1:length(attributeValuePairs), .c=list)({
+        #  if(length(intersect(uncoveredConcept, attributeValuePairs[[i]]$support)) > 0){
+        #    return(attributeValuePairs[[i]])
+        #  }
+        #})
         TG <- list.clean(TG, recursive = F)
         names(TG) <- paste("bes",seq(1,length(TG)), sep="")
               
         ## T(G) := T(G) - T のところ
+        #microbenchmark(
+        # 案1
+        #for(tmp.rule in tmpRule){
+        #  TG <- lapply(TG, function(tg){
+        #    if(tg$idx == tmp.rule$idx){
+        #      if(tg$type == "num"){
+        #        if(tg$values1 == tmp.rule$values1 & tg$values2 == tmp.rule$values2){
+        #          return(NULL)
+        #        }else{
+        #          return(tg)
+        #        }
+        #      }else{
+        #        if(tg$values == tmp.rule$values){
+        #          return(NULL)
+        #        }else{
+        #          return(tg)
+        #        }
+        #      }
+        #    }else{
+        #      return(tg)
+        #    }
+        #  })
+        #  TG <- list.clean(TG, recursive = F)
+        #}
+        ## 案2
         for(tmp.rule in tmpRule){
-          TG <- lapply(TG, function(tg){
-            if(tg$idx == tmp.rule$idx){
-              if(tg$type == "num"){
-                if(tg$values1 == tmp.rule$values1 & tg$values2 == tmp.rule$values2){
-                  return(NULL)
-                }else{
-                  return(tg)
-                }
-              }else{
-                if(tg$values == tmp.rule$values){
-                  return(NULL)
-                }else{
-                  return(tg)
-                }
-              }
-            }else{
-              return(tg)
-            }
-          })
-          TG <- list.clean(TG, recursive = F)
+          if(tmp.rule$type == "num"){
+            TG <- list.filter(TG,
+                              idx != tmp.rule$idx | 
+                              values1 != tmp.rule$values1 | 
+                              values2 != tmp.rule$values2)
+          }else{
+            TG <- list.filter(TG,
+                              idx != tmp.rule$idx | 
+                              values != tmp.rule$values)
+          }
         }
+        ## 案3
+        #TG.rm <- lapply(tmpRule, function(tmp.rule){
+        #  if(tmp.rule$type == "num"){
+        #    return(list.filter(TG,
+        #                      idx == tmp.rule$idx & 
+        #                      values1 == tmp.rule$values1 & 
+        #                      values2 == tmp.rule$values2))
+        #  }else{
+        #    return(list.filter(TG,
+        #                       idx == tmp.rule$idx & 
+        #                       values == tmp.rule$values))
+        #  }
+        #})
+        #for(tg.rm in TG.rm){
+        #  if(tg.rm$type == "num"){
+        #    TG <- list.filter(TG,
+        #                      idx == tg.rm$idx &
+        #                      values1 == tg.rm$values1 & 
+        #                      values2 == tg.rm$values2)
+        #  }else{
+        #    TG <- list.filter(TG,
+        #                      idx == tg.rm$idx &
+        #                      values == tg.rm$values)
+        #  }
+        #}
       }
       
       # tmpRuleの確定のところ
+      values.list <- list()
       names(tmpRule) <- paste("can",seq(1,length(tmpRule)), sep="")
       length.tmpRule <- length(tmpRule)
       if(length.tmpRule > 1){
@@ -192,25 +247,31 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
           tmp.total.support <- list.select(tmp.rule, support) %>% list.common(support)
           if(all(tmp.total.support %in% unname(concept))){
             tmpRule <- list.remove(tmpRule, ei.name)
+          }else{
+            if(tmpRule[[ei.name]]$type == "nom"){
+              values.list <- list.append(values.list, tmpRule[[ei.name]]$values)
+            }else if(tmpRule[[ei.name]]$type  == "num"){
+              values.list <- list.append(values.list, c(tmpRule[[ei.name]]$values1, tmpRule[[ei.name]]$values2))
+            }else{
+              stop("error : no right type")
+            }
           }
           if(length(tmpRule) == 1){
             break  
           }
         }
-      }
-
-      # ルール集合にtmpRuleを追加
-      rule <- list(idx = integer(), values=list(), consequent=character(), support=integer())
-      values.list <- list()
-      for(v in 1:length(tmpRule)){
-        if(list.select(tmpRule, type)[[v]] == "nom"){
-          values.list <- list.append(values.list, tmpRule[[v]]$values)
-        }else if(list.select(tmpRule, type)[[v]] == "num"){
-          values.list <- list.append(values.list, c(tmpRule[[v]]$values1, tmpRule[[v]]$values2))
+      }else{
+        if(tmpRule[[1]]$type == "nom"){
+          values.list <- list.append(values.list, tmpRule[[1]]$values)
+        }else if(tmpRule[[1]]$type  == "num"){
+          values.list <- list.append(values.list, c(tmpRule[[1]]$values1, tmpRule[[1]]$values2))
         }else{
           stop("error : no right type")
         }
       }
+
+      # ルール集合にtmpRuleを追加
+      rule <- list(idx = integer(), values=list(), consequent=character(), support=integer())
       rule <- list(idx = list.select(tmpRule, idx) %>% list.mapv(idx) %>% unname(), 
                    values=values.list, 
                    consequent = conclusion, 
@@ -218,10 +279,11 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
       rules <- list.append(rules, rule)
       
       # Gの更新（G := B - [T] のところ）
-      uncoveredConcept <- concept
-      for(len in 1:length(rules)){
-        uncoveredConcept <- setdiff(uncoveredConcept, rules[[len]]$support)
-      }
+      #uncoveredConcept <- concept
+      #for(len in 1:length(rules)){
+      #  uncoveredConcept <- setdiff(uncoveredConcept, rules[[len]]$support)
+      #}
+      uncoveredConcept <- setdiff(concept, list.cases(rules, support))
     }
     
     # 最後のスクリーニング
@@ -234,6 +296,12 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
         }        
       }
     }
+    return(rules)
+  #}
+  })
+  rules <- list()
+  for(r in 1:length(Rules)){
+    rules <- append(rules, Rules[[r]])
   }
   
   # simplicity conditions
@@ -278,7 +346,7 @@ My.RI.MLEM2Rules.RST <- function(decision.table)  {
   attr(rules2, "colnames") <- colnames(decision.table)[-decIdx]
   
   # RuleSetRSTクラスを付与し、rulesの記述を指定フォーマットに変える
-  source("~/R/roughsets/My.ObjectFactory.R")
+  source("~/roughsets/My.ObjectFactory.R")
   rules2 = My.ObjectFactory(rules2, classname = "RuleSetRST")
   
   return(rules2);
@@ -359,7 +427,7 @@ My.RI.LEM2Rules.RST <- function(decision.table)  {
   attr(rules, "colnames") <- colnames(decision.table)[-decIdx]
   
   # RuleSetRSTクラスを付与し、rulesの記述を指定フォーマットに変える
-  source("/home/ooki/R/roughsets/My.ObjectFactory.R")
+  source("~/roughsets/My.ObjectFactory.R")
   rules = My.ObjectFactory(rules, classname = "RuleSetRST")
   
   return(rules);
